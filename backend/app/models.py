@@ -3,11 +3,14 @@ from sqlalchemy.sql import func
 import enum
 from database import Base
 
+# Status dos incidentes
 class CriticalityEnum(str, enum.Enum):
     ALTA = "ALTA"
     MEDIA = "MEDIA"
     BAIXA = "BAIXA"
 
+# Categorias dos acidentes, com duas categorias a mais: Acidentes com animais (Sendo animais silvestres as soluções envolvem
+# com orgãos ambientais responsáveis) e Derramamento de carga (Pode ter que que envolver outros procedimentos) 
 class CategoryEnum(str, enum.Enum):
     ACIDENTE_VEICULO = "Acidente com Veículo"
     ACIDENTE_VITIMAS = "Acidente com Vítimas"

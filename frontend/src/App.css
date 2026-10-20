@@ -364,19 +364,11 @@
   border-color: #38bdf8;
 }
 
-.filter-chips-row {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.filter-label {
-  font-size: 0.78rem;
-  color: var(--text-muted);
-  font-weight: 600;
-  text-transform: uppercase;
-  margin-right: 0.25rem;
+.select-active-critical {
+  border-color: #ef4444 !important;
+  color: #fca5a5 !important;
+  background-color: rgba(239, 68, 68, 0.12) !important;
+  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.3);
 }
 
 .chip-btn {

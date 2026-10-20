@@ -1,17 +1,14 @@
 import React from 'react';
-import { Search, Filter, X } from './Icons';
-import { CATEGORIES, CRITICALITIES, STATUSES } from '../constants/incidentConfig';
+import { Search, X } from './Icons';
+import { CATEGORIES, STATUSES } from '../constants/incidentConfig';
 
 export function FilterBar({ filters, setFilters }) {
   const handleSearchChange = (e) => {
     setFilters(prev => ({ ...prev, search: e.target.value }));
   };
 
-  const handleCriticalityClick = (crit) => {
-    setFilters(prev => ({
-      ...prev,
-      criticality: prev.criticality === crit ? 'TODAS' : crit
-    }));
+  const handleCriticalityChange = (e) => {
+    setFilters(prev => ({ ...prev, criticality: e.target.value }));
   };
 
   const handleCategoryChange = (e) => {
@@ -23,7 +20,7 @@ export function FilterBar({ filters, setFilters }) {
   };
 
   const hasActiveFilters = 
-    filters.search || 
+    Boolean(filters.search) || 
     (filters.criticality && filters.criticality !== 'TODAS') || 
     (filters.category && filters.category !== 'TODAS') || 
     (filters.status && filters.status !== 'TODAS');
@@ -33,24 +30,38 @@ export function FilterBar({ filters, setFilters }) {
       search: '',
       criticality: 'TODAS',
       category: 'TODAS',
-      status: 'TODAS'
+      status: 'TODAS',
     });
   };
 
   return (
     <div className="filter-bar">
       <div className="filter-top-row">
+        {/* Campo de Busca Textual */}
         <div className="search-input-wrapper">
           <Search size={18} className="search-icon" />
           <input
             type="text"
             className="search-input"
-            placeholder="Buscar por rodovia, KM, placa, carga ou descrição..."
+            placeholder="Buscar por rodovia, KM, placa ou ocorrência..."
             value={filters.search}
             onChange={handleSearchChange}
           />
         </div>
 
+        {/* Dropdown de Criticidade / Prioridade */}
+        <select
+          className={`filter-select ${filters.criticality === 'ALTA' ? 'select-active-critical' : ''}`}
+          value={filters.criticality}
+          onChange={handleCriticalityChange}
+        >
+          <option value="TODAS">Todas as Criticidades</option>
+          <option value="ALTA">🚨 ALTA (Prioridade Máxima)</option>
+          <option value="MEDIA">⚠️ Média</option>
+          <option value="BAIXA">ℹ️ Baixa</option>
+        </select>
+
+        {/* Dropdown de Categoria */}
         <select
           className="filter-select"
           value={filters.category}
@@ -62,6 +73,7 @@ export function FilterBar({ filters, setFilters }) {
           ))}
         </select>
 
+        {/* Dropdown de Status */}
         <select
           className="filter-select"
           value={filters.status}
@@ -73,6 +85,7 @@ export function FilterBar({ filters, setFilters }) {
           ))}
         </select>
 
+        {/* Botão de Limpar Filtros Ativos */}
         {hasActiveFilters && (
           <button 
             type="button" 
@@ -81,49 +94,9 @@ export function FilterBar({ filters, setFilters }) {
             title="Limpar todos os filtros"
           >
             <X size={14} />
-            <span>Limpar Filtros</span>
+            <span>Limpar</span>
           </button>
         )}
-      </div>
-
-      <div className="filter-chips-row">
-        <span className="filter-label">
-          <Filter size={12} style={{ display: 'inline', marginRight: '4px' }} />
-          Gestão por Exceção:
-        </span>
-
-        <button
-          type="button"
-          className={`chip-btn ${filters.criticality === 'TODAS' ? 'active' : ''}`}
-          onClick={() => handleCriticalityClick('TODAS')}
-        >
-          Todas
-        </button>
-
-        <button
-          type="button"
-          className={`chip-btn ${filters.criticality === 'ALTA' ? 'active-critical' : ''}`}
-          onClick={() => handleCriticalityClick('ALTA')}
-        >
-          <span className="pulse-bullet"></span>
-          🚨 ALTA (Prioridade Máxima)
-        </button>
-
-        <button
-          type="button"
-          className={`chip-btn ${filters.criticality === 'MEDIA' ? 'active-warning' : ''}`}
-          onClick={() => handleCriticalityClick('MEDIA')}
-        >
-          ⚠️ Média
-        </button>
-
-        <button
-          type="button"
-          className={`chip-btn ${filters.criticality === 'BAIXA' ? 'active-info' : ''}`}
-          onClick={() => handleCriticalityClick('BAIXA')}
-        >
-          ℹ️ Baixa
-        </button>
       </div>
     </div>
   );

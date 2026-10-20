@@ -1,9 +1,9 @@
 import React from 'react';
 import { AlertTriangle, Clock, CheckCircle2, Activity, AlertCircle } from './Icons';
 
-export function KpiCards({ incidents, allIncidents = [], filters, setFilters }) {
+export function KpiCards({ incidents = [], allIncidents = [], filters = {}, setFilters = () => {} }) {
   // Usamos allIncidents para que os números reflitam sempre o total real da frota
-  const dataSource = allIncidents.length > 0 ? allIncidents : incidents;
+  const dataSource = allIncidents?.length > 0 ? allIncidents : (incidents || []);
 
   const total = dataSource.length;
   const criticalCount = dataSource.filter(i => i.criticality === 'ALTA' && i.status !== 'Fechado').length;
@@ -11,12 +11,16 @@ export function KpiCards({ incidents, allIncidents = [], filters, setFilters }) 
   const openCount = dataSource.filter(i => i.status === 'Aberto').length;
   const closedCount = dataSource.filter(i => i.status === 'Fechado').length;
 
-  // Verificações de filtro ativo
-  const isCriticalActive = filters.criticality === 'ALTA' && filters.status === 'TODAS';
-  const isInvestigationActive = filters.status === 'Em Investigação' && filters.criticality === 'TODAS';
-  const isOpenActive = filters.status === 'Aberto' && filters.criticality === 'TODAS';
-  const isClosedActive = filters.status === 'Fechado' && filters.criticality === 'TODAS';
-  const isTotalActive = filters.criticality === 'TODAS' && filters.status === 'TODAS' && filters.category === 'TODAS' && !filters.search;
+  // Verificações seguras de filtro ativo
+  const isCriticalActive = filters?.criticality === 'ALTA' && (filters?.status === 'TODAS' || !filters?.status);
+  const isInvestigationActive = filters?.status === 'Em Investigação' && (filters?.criticality === 'TODAS' || !filters?.criticality);
+  const isOpenActive = filters?.status === 'Aberto' && (filters?.criticality === 'TODAS' || !filters?.criticality);
+  const isClosedActive = filters?.status === 'Fechado' && (filters?.criticality === 'TODAS' || !filters?.criticality);
+  const isTotalActive = 
+    (filters?.criticality === 'TODAS' || !filters?.criticality) && 
+    (filters?.status === 'TODAS' || !filters?.status) && 
+    (filters?.category === 'TODAS' || !filters?.category) && 
+    !filters?.search;
 
   // Handlers para abrir o filtro com 1 clique
   const handleToggleCritical = () => {

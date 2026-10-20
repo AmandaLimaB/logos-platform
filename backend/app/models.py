@@ -1,6 +1,11 @@
+import sys
+from pathlib import Path
 from sqlalchemy import Column, Integer, String, DateTime, Enum
 from sqlalchemy.sql import func
 import enum
+
+# Garante localização correta do database.py
+sys.path.append(str(Path(__file__).resolve().parent))
 from database import Base
 
 # Status dos incidentes
@@ -9,14 +14,13 @@ class CriticalityEnum(str, enum.Enum):
     MEDIA = "MEDIA"
     BAIXA = "BAIXA"
 
-# Categorias dos acidentes, com duas categorias a mais: Acidentes com animais (Sendo animais silvestres as soluções envolvem
-# com orgãos ambientais responsáveis) e Derramamento de carga (Pode ter que que envolver outros procedimentos) 
+# Categorias dos acidentes
 class CategoryEnum(str, enum.Enum):
     ACIDENTE_VEICULO = "Acidente com Veículo"
     ACIDENTE_VITIMAS = "Acidente com Vítimas"
     ACIDENTE_ANIMAL = "Acidente com Animal"
     PERDA_CARGA = "Derramamento de Carga"
-    CLIMA_ATIPICO = "Condição Climática Atípica na Pista"
+    CLIMA_ATIPICO = "Condição Climática Atípica"
     PROBLEMA_MECANICO = "Problema Mecânico"
     BLOQUEIO_PISTA = "Bloqueio de Pista"
 

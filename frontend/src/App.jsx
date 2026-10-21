@@ -29,18 +29,37 @@ function App() {
   const [conflictInfo, setConflictInfo] = useState(null);
   const [connectionError, setConnectionError] = useState(null);
 
-  // Carrega incidentes da API
+  // Carrega incidentes da API com suporte a filtros combinados e status ATIVOS
   const loadIncidents = useCallback(async (isBackground = false) => {
     if (!isBackground) setIsLoading(true);
     else setIsRefreshing(true);
     setConnectionError(null);
 
     try {
-      // Busca incidentes com base nos filtros atuais
-      const data = await fetchIncidents(filters);
-      setIncidents(data);
+      // 1. Prepara parâmetros para a API: se status for 'ATIVOS', busca 'TODAS' para tratar localmente
+      const apiFilters = {
+        ...filters,
+        status: filters.status === 'ATIVOS' ? 'TODAS' : filters.status,
+      };
 
-      // Busca dados completos (sem filtros) para manter os números dos KPIs sempre precisos
+      const data = await fetchIncidents(apiFilters);
+
+      // 2. Se o filtro for 'ATIVOS', mantém apenas incidentes em 'Aberto' ou 'Em Investigação'
+      let filteredData = data;
+      if (filters.status === 'ATIVOS') {
+        filteredData = data.filter(
+          item => item.status === 'Aberto' || item.status === 'Em Investigação'
+        );
+      }
+
+      // 3. Ordena os incidentes por data de criação: mais antigos primeiro (ASC)
+      const sortedData = [...filteredData].sort(
+        (a, b) => new Date(a.created_at) - new Date(b.created_at)
+      );
+
+      setIncidents(sortedData);
+
+      // 4. Busca dados completos (sem filtros) para manter os KPIs consolidados
       const isUnfiltered = 
         filters.criticality === 'TODAS' && 
         filters.category === 'TODAS' && 
@@ -48,13 +67,17 @@ function App() {
         !filters.search;
 
       if (isUnfiltered) {
-        setAllIncidents(data);
+        setAllIncidents(sortedData);
       } else {
-        // Busca paralela rápida apenas para manter contadores do topo consolidados
-        fetchIncidents({}).then(all => setAllIncidents(all)).catch(() => {});
+        fetchIncidents({}).then(all => {
+          const sortedAll = [...all].sort(
+            (a, b) => new Date(a.created_at) - new Date(b.created_at)
+          );
+          setAllIncidents(sortedAll);
+        }).catch(() => {});
       }
 
-      // Mantém o item selecionado sincronizado se o modal estiver aberto
+      // 5. Mantém o item selecionado sincronizado no modal se estiver aberto
       setSelectedIncident(curr => {
         if (!curr) return null;
         const fresh = data.find(i => i.id === curr.id);
@@ -111,7 +134,7 @@ function App() {
         expected_version: currentVersion,
       });
 
-      // Confirma atualização com dados do servidor
+      // Confirms com os dados retornados do servidor
       setIncidents(prev =>
         prev.map(item => (item.id === incidentId ? updated : item))
       );
@@ -120,7 +143,7 @@ function App() {
       );
       setSelectedIncident(curr => (curr && curr.id === incidentId ? updated : curr));
     } catch (err) {
-      // Rollback imediato se falhar
+      // Rollback em caso de falha
       setIncidents(previousIncidents);
       setAllIncidents(previousAll);
       setSelectedIncident(previousIncidents.find(i => i.id === incidentId) || null);
@@ -139,7 +162,7 @@ function App() {
     }
   };
 
-  // Simulação de Concorrência Otimista (para demonstração ao vivo e vídeo)
+  // Simulação de Concorrência Otimista (409) para a apresentação/vídeo
   const handleSimulateConflict = async (incident) => {
     setConflictInfo(null);
     const staleVersion = incident.version - 1;
@@ -176,9 +199,9 @@ function App() {
     }
   };
 
-  // Restauração do Mock / Seed
+  // Restauração da Seed de Testes
   const handleResetSeed = async () => {
-    if (!window.confirm('Deseja restaurar a base de dados com as 15 ocorrências padrão de teste?')) {
+    if (!window.confirm('Deseja restaurar a base de dados com as ocorrências padrão de teste?')) {
       return;
     }
     try {
@@ -250,7 +273,7 @@ function App() {
           )}
         </div>
 
-        {/* Grade de Incidentes Compacta (Triagem Rápida) */}
+        {/* Grade de Incidentes Compacta */}
         {isLoading ? (
           <div className="loading-indicator">
             <RefreshCw size={24} className="spin" />

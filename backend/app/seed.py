@@ -9,144 +9,190 @@ sys.path.append(str(Path(__file__).resolve().parent))
 from database import SessionLocal, engine, Base
 import models
 
-# Cria tabelas se não existirem
+# Cria as tabelas se não existirem
 Base.metadata.create_all(bind=engine)
 
-SAMPLE_INCIDENTS = [
+# Rodovias e trechos reais para dar realismo ao dashboard
+HIGHWAYS = [
+    ("BR-116", ["Feira de Santana/BA", "Vitória da Conquista/BA", "Registro/SP", "Campina Grande do Sul/PR", "Além Paraíba/MG"]),
+    ("BR-101", ["Feira de Santana/BA", "Alagoinhas/BA", "Lauro de Freitas/BA", "Ubatuba/SP", "Tubarao/SC", "Joinville/SC"]),
+    ("BR-381", ["Betim/MG", "Ipatinga/MG", "Guarulhos/SP", "Sabará/MG"]),
+    ("BR-277", ["Serra do Mar/PR", "Guarapuava/PR", "Cascavel/PR", "Foz do Iguaçu/PR"]),
+    ("BR-040", ["Juiz de Fora/MG", "Ribeirão das Neves/MG", "Luziânia/GO", "Petrópolis/RJ"]),
+    ("BR-163", ["Nova Mutum/MT", "Rondonópolis/MT", "Sinop/MT", "Campo Grande/MS"]),
+    ("BR-153", ["Anápolis/GO", "Gurupi/TO", "Araguaína/TO", "Marília/SP"]),
+    ("BR-376", ["Guaratuba/PR", "Maringá/PR", "Tijucas do Sul/PR"]),
+    ("BR-230", ["Marabá/PA", "Altamira/PA", "Araguaína/TO"]),
+    ("BR-050", ["Uberlândia/MG", "Araguari/MG", "Catalão/GO"]),
+    ("BR-262", ["Miranda/MS", "Corumbá/MS", "Manhuaçu/MG"]),
+]
+
+# Moldes de incidentes compatíveis exatamente com as suas categorias do models.py
+TEMPLATES_INCIDENTS = [
+    # ALTA CRITICIDADE
     {
-        "title": "Tombamento de carreta com bloqueio total",
-        "description": "Carreta bi-trem bitrem carregada tombou no km 245. Ambas as faixas bloqueadas no sentido decrescente. Congestionamento de 7km.",
+        "title": "Tombamento de carreta com bloqueio total da via",
+        "description": "Carreta bitrem carregada tombou na pista. Ambas as faixas bloqueadas no sentido decrescente. Congestionamento extenso na rodovia.",
         "category": models.CategoryEnum.BLOQUEIO_PISTA,
         "criticality": models.CriticalityEnum.ALTA,
-        "location": "BR-116, Km 245 - Vitória da Conquista/BA",
-        "status": models.StatusEnum.ABERTO,
     },
     {
-        "title": "Colisão frontal com vítimas presas às ferragens",
-        "description": "Colisão entre caminhão tanque e utilitário. Equipes de socorro da concessionária acionadas. Pista operando em sistema pare-e-siga.",
+        "title": "Colisão frontal severa com vítimas presas às ferragens",
+        "description": "Colisão entre caminhão tanque e utilitário. Equipes de resgate da concessionária e SAMU acionados no local.",
         "category": models.CategoryEnum.ACIDENTE_VITIMAS,
         "criticality": models.CriticalityEnum.ALTA,
-        "location": "BR-101, Km 180 - Feira de Santana/BA",
-        "status": models.StatusEnum.EM_INVESTIGACAO,
     },
     {
         "title": "Derramamento de carga química (material corrosivo)",
-        "description": "Vazamento de tambores de ácido após freada brusca. Risco ambiental e à segurança dos motoristas. Polícia Rodoviária e Defesa Civil no local.",
+        "description": "Vazamento de tambores de ácido na pista após freada brusca. Risco ambiental e de explosão isolando a área.",
         "category": models.CategoryEnum.PERDA_CARGA,
         "criticality": models.CriticalityEnum.ALTA,
-        "location": "BR-381, Km 490 - Betim/MG",
-        "status": models.StatusEnum.ABERTO,
     },
     {
-        "title": "Neblina densa com visibilidade inferior a 10 metros",
-        "description": "Forte cerração na serra impedindo tráfego em velocidade operacional regular. Risco iminente de engavetamento.",
-        "category": models.CategoryEnum.CLIMA_ATIPICO,
-        "criticality": models.CriticalityEnum.ALTA,
-        "location": "BR-277, Km 42 - Serra do Mar/PR",
-        "status": models.StatusEnum.ABERTO,
-    },
-    {
-        "title": "Quebra de eixo de veículo pesado na subida de serra",
-        "description": "Caminhão trucado quebrou sobre a terceira faixa. Tráfego lento, guincho pesado já requisitado com previsão de chegada em 35 minutos.",
-        "category": models.CategoryEnum.PROBLEMA_MECANICO,
-        "criticality": models.CriticalityEnum.MEDIA,
-        "location": "BR-040, Km 780 - Juiz de Fora/MG",
-        "status": models.StatusEnum.EM_INVESTIGACAO,
-    },
-    {
-        "title": "Bovino solto atravessando a pista de rolamento",
-        "description": "Animal de grande porte na faixa de rolamento da direita. Concessionária enviou equipe de apreensão de animais.",
-        "category": models.CategoryEnum.ACIDENTE_ANIMAL,
-        "criticality": models.CriticalityEnum.MEDIA,
-        "location": "BR-101, Km 82 - Alagoinhas/BA",
-        "status": models.StatusEnum.ABERTO,
-    },
-    {
-        "title": "Colisão traseira de baixa intensidade sem feridos",
-        "description": "Colisão entre dois caminhões no acostamento. Apenas danos materiais na traseira e para-choque. Motoristas aguardando perícia.",
-        "category": models.CategoryEnum.ACIDENTE_VEICULO,
-        "criticality": models.CriticalityEnum.BAIXA,
-        "location": "BR-116, Km 112 - Campina Grande do Sul/PR",
-        "status": models.StatusEnum.EM_INVESTIGACAO,
-    },
-    {
-        "title": "Superaquecimento de motor no acostamento",
-        "description": "Caminhão parado no acostamento seguro aguardando resfriamento e reposição de líquido de arrefecimento. Sem impacto no fluxo.",
-        "category": models.CategoryEnum.PROBLEMA_MECANICO,
-        "criticality": models.CriticalityEnum.BAIXA,
-        "location": "BR-050, Km 60 - Uberlândia/MG",
-        "status": models.StatusEnum.FECHADO,
-    },
-    {
-        "title": "Queda de barreira parcial após fortes chuvas",
-        "description": "Deslizamento de terra ocupando meia pista na faixa da esquerda. Cones de sinalização já instalados a 200m.",
+        "title": "Queda de barreira de grande porte cobrindo o asfalto",
+        "description": "Deslizamento de encosta ocupando totalmente a pista após fortes chuvas. Maquinário pesado em deslocamento.",
         "category": models.CategoryEnum.BLOQUEIO_PISTA,
         "criticality": models.CriticalityEnum.ALTA,
-        "location": "BR-101, Km 440 - Ubatuba/SP",
-        "status": models.StatusEnum.ABERTO,
     },
     {
-        "title": "Derramamento de grãos de soja na via",
+        "title": "Neblina densa com visibilidade inferior a 5 metros",
+        "description": "Forte cerração no trecho de serra impedindo o tráfego seguro de veículos de carga. Operação comboio ativada.",
+        "category": models.CategoryEnum.CLIMA_ATIPICO,
+        "criticality": models.CriticalityEnum.ALTA,
+    },
+    {
+        "title": "Engavetamento envolvendo múltiplos veículos de carga",
+        "description": "Colisão em cadeia envolvendo 3 caminhões pesados devido à pista molhada e baixa visibilidade.",
+        "category": models.CategoryEnum.ACIDENTE_VITIMAS,
+        "criticality": models.CriticalityEnum.ALTA,
+    },
+
+    # MEDIA CRITICIDADE
+    {
+        "title": "Quebra de eixo de veículo pesado na subida de serra",
+        "description": "Caminhão trucado quebrou sobre a terceira faixa. Tráfego lento, guincho pesado requisitado pela central.",
+        "category": models.CategoryEnum.PROBLEMA_MECANICO,
+        "criticality": models.CriticalityEnum.MEDIA,
+    },
+    {
+        "title": "Bovino solto atravessando a faixa de rolamento",
+        "description": "Animal de grande porte na pista. Concessionária enviou equipe de apreensão para contenção e segurança da via.",
+        "category": models.CategoryEnum.ACIDENTE_ANIMAL,
+        "criticality": models.CriticalityEnum.MEDIA,
+    },
+    {
+        "title": "Derramamento de grãos de soja na pista",
         "description": "Abertura acidental da bica do caminhão caçamba. Camada escorregadia de grãos por 300 metros. Equipe de varrição acionada.",
         "category": models.CategoryEnum.PERDA_CARGA,
         "criticality": models.CriticalityEnum.MEDIA,
-        "location": "BR-163, Km 610 - Nova Mutum/MT",
-        "status": models.StatusEnum.EM_INVESTIGACAO,
     },
     {
-        "title": "Pneu estourado de caminhão em faixa de desaceleração",
-        "description": "Veículo parado em local seguro próximo a posto de pesagem. Borracheiro móvel acionado pelo motorista.",
-        "category": models.CategoryEnum.PROBLEMA_MECANICO,
-        "criticality": models.CriticalityEnum.BAIXA,
-        "location": "BR-153, Km 320 - Anápolis/GO",
-        "status": models.StatusEnum.FECHADO,
-    },
-    {
-        "title": "Queda de árvore de grande porte sobre a fiação e via",
-        "description": "Ventania derrubou eucalipto obstruindo faixa 1 e 2. Corpo de Bombeiros no local realizando desobstrução com motosserras.",
-        "category": models.CategoryEnum.BLOQUEIO_PISTA,
-        "criticality": models.CriticalityEnum.ALTA,
-        "location": "BR-116, Km 310 - Registro/SP",
-        "status": models.StatusEnum.EM_INVESTIGACAO,
-    },
-    {
-        "title": "Pista com lâmina d'água (Aquaplanagem)",
-        "description": "Chuva torrencial repentina acumulando poças profundas no trecho em curva. Redução preventiva de velocidade recomendada no painel eletrônico.",
+        "title": "Acúmulo de lâmina d'água na pista (Aquaplanagem)",
+        "description": "Chuva torrencial acumulando poças profundas em trecho de curva. Alerta emitido nos painéis eletrônicos da rodovia.",
         "category": models.CategoryEnum.CLIMA_ATIPICO,
         "criticality": models.CriticalityEnum.MEDIA,
-        "location": "BR-376, Km 668 - Guaratuba/PR",
-        "status": models.StatusEnum.ABERTO,
     },
     {
-        "title": "Alerta de animal silvestre (Tamanduá) na pista",
-        "description": "Motorista avistou animal tentando atravessar via de fluxo intenso. Polícia Ambiental acionada para resgate seguro.",
-        "category": models.CategoryEnum.ACIDENTE_ANIMAL,
-        "criticality": models.CriticalityEnum.BAIXA,
-        "location": "BR-262, Km 515 - Miranda/MS",
-        "status": models.StatusEnum.INCONCLUSIVO,
-    },
-    {
-        "title": "Pane elétrica no sistema de rastreamento e telemetria",
-        "description": "Caminhão parou em ponto cego sem sinal de GPS. Motorista entrou em contato via rádio solicitando conferência e checagem de rota.",
+        "title": "Pane elétrica no sistema de telemetria do veículo",
+        "description": "Caminhão parou sem sinal de GPS em ponto cego. Motorista em contato via rádio solicitando apoio operacional.",
         "category": models.CategoryEnum.PROBLEMA_MECANICO,
         "criticality": models.CriticalityEnum.MEDIA,
-        "location": "BR-230, Km 150 - Marabá/PA",
-        "status": models.StatusEnum.ABERTO,
+    },
+    {
+        "title": "Tombamento parcial de carga de engradados",
+        "description": "Carga lateral cedeu espalhando caixas no acostamento e parte da faixa da direita. Pessoal em limpeza.",
+        "category": models.CategoryEnum.PERDA_CARGA,
+        "criticality": models.CriticalityEnum.MEDIA,
+    },
+
+    # BAIXA CRITICIDADE
+    {
+        "title": "Colisão traseira leve entre caminhões sem feridos",
+        "description": "Pequena colisão no acostamento gerando apenas danos materiais no para-choque. Motoristas aguardando perícia.",
+        "category": models.CategoryEnum.ACIDENTE_VEICULO,
+        "criticality": models.CriticalityEnum.BAIXA,
+    },
+    {
+        "title": "Superaquecimento de motor no acostamento seguro",
+        "description": "Caminhão parado no acostamento aguardando resfriamento do motor. Sem impacto no fluxo de veículos.",
+        "category": models.CategoryEnum.PROBLEMA_MECANICO,
+        "criticality": models.CriticalityEnum.BAIXA,
+    },
+    {
+        "title": "Pneu estourado na faixa de desaceleração",
+        "description": "Veículo posicionado em local seguro próximo a posto de combustível. Borracheiro móvel acionado.",
+        "category": models.CategoryEnum.PROBLEMA_MECANICO,
+        "criticality": models.CriticalityEnum.BAIXA,
+    },
+    {
+        "title": "Presença de animal de pequeno porte no acostamento",
+        "description": "Animal avistado próximo à rodovia. Inspeção da rodovia acionada em patrulha para prevenção.",
+        "category": models.CategoryEnum.ACIDENTE_ANIMAL,
+        "criticality": models.CriticalityEnum.BAIXA,
+    },
+    {
+        "title": "Colisão lateral de baixa velocidade em posto de pesagem",
+        "description": "Raspagem de retrovisores entre dois veículos na balança. Situação controlada no local.",
+        "category": models.CategoryEnum.ACIDENTE_VEICULO,
+        "criticality": models.CriticalityEnum.BAIXA,
     }
 ]
+
+# Pesos de distribuição de status
+STATUS_WEIGHTS = [
+    (models.StatusEnum.ABERTO, 0.40),
+    (models.StatusEnum.EM_INVESTIGACAO, 0.35),
+    (models.StatusEnum.INCONCLUSIVO, 0.10),
+    (models.StatusEnum.FECHADO, 0.15)
+]
+
+def get_random_status():
+    statuses, weights = zip(*STATUS_WEIGHTS)
+    return random.choices(statuses, weights=weights)[0]
+
+def generate_100_incidents():
+    incidents = []
+    
+    for i in range(100):
+        template = random.choice(TEMPLATES_INCIDENTS)
+        highway, cities = random.choice(HIGHWAYS)
+        city = random.choice(cities)
+        km = random.randint(12, 820)
+        
+        location_str = f"{highway}, Km {km} - {city}"
+        
+        title = f"{template['title']} #{i+101}"
+        description = f"{template['description']} [Registrado via Central de Telemetria #{random.randint(1000, 9999)}]."
+        
+        incidents.append({
+            "title": title,
+            "description": description,
+            "category": template["category"],
+            "criticality": template["criticality"],
+            "location": location_str,
+            "status": get_random_status()
+        })
+        
+    return incidents
 
 def seed_database():
     db = SessionLocal()
     try:
-        # Verifica se já há dados
+        # Verifica se o banco já está populado com 100 ou mais registros
         count = db.query(models.Incident).count()
-        if count > 0:
-            print(f"Banco de dados já contém {count} incidentes cadastrados.")
+        if count >= 100:
+            print(f"O banco de dados já possui {count} incidentes cadastrados.")
             return
 
+        print("Iniciando inserção de 100 incidentes simulados no banco de dados...")
+        sample_data = generate_100_incidents()
+
         now = datetime.now()
-        for i, item in enumerate(SAMPLE_INCIDENTS):
-            created_time = now - timedelta(minutes=(len(SAMPLE_INCIDENTS) - i) * 18 + random.randint(1, 10))
+        for i, item in enumerate(sample_data):
+            # Distribui as datas de criação ao longo dos últimos dias de forma realista
+            minutes_ago = (100 - i) * 20 + random.randint(1, 10)
+            created_time = now - timedelta(minutes=minutes_ago)
+            
             incident = models.Incident(
                 title=item["title"],
                 description=item["description"],
@@ -154,14 +200,17 @@ def seed_database():
                 criticality=item["criticality"],
                 location=item["location"],
                 status=item["status"],
-                version=1,
+                version=1,  # Inicia a versão do Bloqueio Otimista em 1
                 created_at=created_time,
                 updated_at=created_time
             )
             db.add(incident)
 
         db.commit()
-        print(f"Sucesso: {len(SAMPLE_INCIDENTS)} incidentes realistas foram inseridos no banco de dados!")
+        print("Sucesso! 100 incidentes foram gravados no banco de dados com sucesso.")
+    except Exception as e:
+        db.rollback()
+        print(f"Erro ao popular o banco de dados: {e}")
     finally:
         db.close()
 

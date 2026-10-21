@@ -2,17 +2,17 @@ import React from 'react';
 import { AlertTriangle, Clock, CheckCircle2, Activity, AlertCircle } from './Icons';
 
 export function KpiCards({ incidents = [], allIncidents = [], filters = {}, setFilters = () => {} }) {
-  // Usamos allIncidents para que os números reflitam sempre o total real da frota
   const dataSource = allIncidents?.length > 0 ? allIncidents : (incidents || []);
 
   const total = dataSource.length;
+  // Conta incidentes de ALTA criticidade ignorando os Fechados
   const criticalCount = dataSource.filter(i => i.criticality === 'ALTA' && i.status !== 'Fechado').length;
   const inInvestigation = dataSource.filter(i => i.status === 'Em Investigação').length;
   const openCount = dataSource.filter(i => i.status === 'Aberto').length;
   const closedCount = dataSource.filter(i => i.status === 'Fechado').length;
 
-  // Verificações seguras de filtro ativo
-  const isCriticalActive = filters?.criticality === 'ALTA' && (filters?.status === 'TODAS' || !filters?.status);
+  // Verificação atualizada: ativo se for ALTA e status for 'ATIVOS' (não fechados)
+  const isCriticalActive = filters?.criticality === 'ALTA' && filters?.status === 'ATIVOS';
   const isInvestigationActive = filters?.status === 'Em Investigação' && (filters?.criticality === 'TODAS' || !filters?.criticality);
   const isOpenActive = filters?.status === 'Aberto' && (filters?.criticality === 'TODAS' || !filters?.criticality);
   const isClosedActive = filters?.status === 'Fechado' && (filters?.criticality === 'TODAS' || !filters?.criticality);
@@ -22,12 +22,13 @@ export function KpiCards({ incidents = [], allIncidents = [], filters = {}, setF
     (filters?.category === 'TODAS' || !filters?.category) && 
     !filters?.search;
 
-  // Handlers para abrir o filtro com 1 clique
+  // Handler para alternar o filtro de Críticos Ativos
   const handleToggleCritical = () => {
     if (isCriticalActive) {
-      setFilters(prev => ({ ...prev, criticality: 'TODAS' }));
+      setFilters(prev => ({ ...prev, criticality: 'TODAS', status: 'TODAS' }));
     } else {
-      setFilters(prev => ({ ...prev, criticality: 'ALTA', status: 'TODAS' }));
+      // Define ALTA e status 'ATIVOS' simultaneamente
+      setFilters(prev => ({ ...prev, criticality: 'ALTA', status: 'ATIVOS' }));
     }
   };
 
@@ -72,7 +73,7 @@ export function KpiCards({ incidents = [], allIncidents = [], filters = {}, setF
         onClick={handleToggleCritical}
         role="button"
         tabIndex={0}
-        title="Clique para filtrar apenas incidentes de ALTA criticidade"
+        title="Clique para filtrar apenas incidentes CRÍTICOS ATIVOS (não fechados)"
         style={{ '--kpi-active-color': '#ef4444' }}
       >
         <div className="kpi-info-box">
